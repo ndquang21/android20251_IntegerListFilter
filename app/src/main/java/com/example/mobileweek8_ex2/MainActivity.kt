@@ -7,7 +7,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ListView
-import android.widget.RadioGroup
+import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import kotlin.math.sqrt
@@ -15,22 +15,37 @@ import kotlin.math.sqrt
 class MainActivity : AppCompatActivity() {
 
     private lateinit var editTextNumber: EditText
-    private lateinit var radioGroupFilters: RadioGroup
     private lateinit var listViewResults: ListView
     private lateinit var textViewEmpty: TextView
 
+    private lateinit var radioOdd: RadioButton
+    private lateinit var radioEven: RadioButton
+    private lateinit var radioPrime: RadioButton
+    private lateinit var radioSquare: RadioButton
+    private lateinit var radioPerfect: RadioButton
+    private lateinit var radioFibonacci: RadioButton
+
+    private lateinit var radioButtons: List<RadioButton>
 
     private lateinit var resultsList: ArrayList<Int>
     private lateinit var adapter: ArrayAdapter<Int>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main) // Sửa: Đã xóa .xml
 
         editTextNumber = findViewById(R.id.editTextNumber)
-        radioGroupFilters = findViewById(R.id.radioGroupFilters)
         listViewResults = findViewById(R.id.listViewResults)
         textViewEmpty = findViewById(R.id.textViewEmpty)
+
+        radioOdd = findViewById(R.id.radioOdd)
+        radioEven = findViewById(R.id.radioEven)
+        radioPrime = findViewById(R.id.radioPrime)
+        radioSquare = findViewById(R.id.radioSquare)
+        radioPerfect = findViewById(R.id.radioPerfect)
+        radioFibonacci = findViewById(R.id.radioFibonacci)
+
+        radioButtons = listOf(radioOdd, radioEven, radioPrime, radioSquare, radioPerfect, radioFibonacci)
 
         resultsList = ArrayList()
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, resultsList)
@@ -53,8 +68,21 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        radioGroupFilters.setOnCheckedChangeListener { group, checkedId ->
+        // click listener chung cho 6 nút
+        val onRadioClicked = View.OnClickListener { view ->
+            (view as RadioButton).isChecked = true
+
+            for (button in radioButtons) {
+                if (button.id != view.id) {
+                    button.isChecked = false
+                }
+            }
+
             updateList()
+        }
+
+        for (button in radioButtons) {
+            button.setOnClickListener(onRadioClicked)
         }
     }
 
@@ -62,10 +90,17 @@ class MainActivity : AppCompatActivity() {
     private fun updateList() {
         val limitNumber = editTextNumber.text.toString().toIntOrNull() ?: 0
 
-        val selectedFilterId = radioGroupFilters.checkedRadioButtonId
+        val selectedFilterId = when {
+            radioOdd.isChecked -> R.id.radioOdd
+            radioEven.isChecked -> R.id.radioEven
+            radioPrime.isChecked -> R.id.radioPrime
+            radioSquare.isChecked -> R.id.radioSquare
+            radioPerfect.isChecked -> R.id.radioPerfect
+            radioFibonacci.isChecked -> R.id.radioFibonacci
+            else -> R.id.radioOdd // Mặc định là "Số lẻ" nếu không ai được chọn
+        }
 
         resultsList.clear()
-
 
         for (i in 1 until limitNumber) {
             val shouldAdd: Boolean = when (selectedFilterId) {
@@ -75,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.radioSquare -> isPerfectSquare(i)
                 R.id.radioPerfect -> isPerfectNumber(i)
                 R.id.radioFibonacci -> isFibonacci(i)
-                else -> false // Mặc định là không thêm
+                else -> false
             }
 
             if (shouldAdd) {
@@ -91,50 +126,35 @@ class MainActivity : AppCompatActivity() {
             textViewEmpty.visibility = View.GONE
         }
 
-
         adapter.notifyDataSetChanged()
     }
 
 
-    // Số lẻ
-    private fun isOdd(n: Int): Boolean {
-        return n % 2 != 0
-    }
+    private fun isOdd(n: Int): Boolean = n % 2 != 0
+    private fun isEven(n: Int): Boolean = n % 2 == 0
 
-    // Số chẵn
-    private fun isEven(n: Int): Boolean {
-        return n % 2 == 0
-    }
-
-    // Số nguyên tố
     private fun isPrime(n: Int): Boolean {
         if (n < 2) return false
         val limit = sqrt(n.toDouble()).toInt()
         for (i in 2..limit) {
-            if (n % i == 0) {
-                return false
-            }
+            if (n % i == 0) return false
         }
         return true
     }
 
-    // Số chính phương
     private fun isPerfectSquare(n: Int): Boolean {
         if (n < 0) return false
         val sqrt = sqrt(n.toDouble()).toInt()
         return sqrt * sqrt == n
     }
 
-    // Số hoàn hảo (tổng các ước bằng chính nó)
     private fun isPerfectNumber(n: Int): Boolean {
         if (n <= 1) return false
-        var sum = 1 // Bắt đầu với ước là 1
+        var sum = 1
         val limit = sqrt(n.toDouble()).toInt()
         for (i in 2..limit) {
             if (n % i == 0) {
                 sum += i
-                // Nếu 'i' là ước, thì 'n/i' cũng là ước
-                // Thêm 'n/i' chỉ khi nó không bằng 'i' (trường hợp số chính phương)
                 if (i * i != n) {
                     sum += n / i
                 }
@@ -143,7 +163,6 @@ class MainActivity : AppCompatActivity() {
         return sum == n
     }
 
-    // Số Fibonacci
     private fun isFibonacci(n: Int): Boolean {
         if (n < 0) return false
         val nLong = n.toLong()
